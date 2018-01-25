@@ -203,12 +203,13 @@ public class CoreFileSystem extends CrailFS {
 		getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
 
 		//write directory record is a directory slot has been assigned to the file
-		if (fileInfo.getDirOffset() >= 0){
-			BlockInfo dirBlock = fileRes.getDirBlock();
-			getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
-			CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path, true);
-			node.addSyncOperation(syncOperation);
-		}
+		//skipping dir
+//		if (fileInfo.getDirOffset() >= 0){
+//			BlockInfo dirBlock = fileRes.getDirBlock();
+//			getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
+//			CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path, true);
+//			node.addSyncOperation(syncOperation);
+//		}
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
@@ -296,8 +297,8 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = renameRes.getDstBlock();
 		getBlockCache(dstDir.getFd()).put(CoreSubOperation.createKey(dstDir.getFd(), dstFile.getDirOffset()), dirBlock);		
 		
-		CoreSyncOperation syncOperationSrc = getSyncOperation(srcParent, srcFile, src, false);
-		CoreSyncOperation syncOperationDst = getSyncOperation(dstDir, dstFile, dst, true);
+//		CoreSyncOperation syncOperationSrc = getSyncOperation(srcParent, srcFile, src, false);
+//		CoreSyncOperation syncOperationDst = getSyncOperation(dstDir, dstFile, dst, true);
 		
 		blockCache.remove(srcFile.getFd());
 		
@@ -306,8 +307,8 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		CoreNode node = CoreNode.create(this, dstFile, dst);
-		node.addSyncOperation(syncOperationSrc);
-		node.addSyncOperation(syncOperationDst);
+//		node.addSyncOperation(syncOperationSrc);
+//		node.addSyncOperation(syncOperationDst);
 		return node;
 	}
 	
@@ -335,7 +336,7 @@ public class CoreFileSystem extends CrailFS {
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		
-		CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path, false);
+//		CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path, false);
 		
 		blockCache.remove(fileInfo.getFd());
 		
@@ -344,7 +345,7 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		CoreNode node = CoreNode.create(this, fileInfo, path);
-		node.addSyncOperation(syncOperation);
+//		node.addSyncOperation(syncOperation);
 		return node;
 	}	
 	
