@@ -70,10 +70,10 @@ public class CrailHDFS extends AbstractFileSystem {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private CrailFS dfs;
 	private Path workingDir;
-	
+
 	public CrailHDFS(final URI uri, final Configuration conf) throws IOException, URISyntaxException {
 		super(uri, "crail", true, 9000);
-		
+
 		try {
 			CrailConfiguration crailConf = new CrailConfiguration();
 			this.dfs = CrailFS.newInstance(crailConf);
@@ -107,7 +107,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				throw new IOException(e);
 			}
 		}
-		
+
 		if (fileInfo == null){
 			Path parent = path.getParent();
 			this.mkdir(parent, FsPermission.getDirDefault(), true);
@@ -117,7 +117,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				throw new IOException(e);
 			}
 		}
-		
+
 		CrailBufferedOutputStream outputStream = null;
 		if (fileInfo != null){
 			try {
@@ -125,16 +125,16 @@ public class CrailHDFS extends AbstractFileSystem {
 				outputStream = fileInfo.getBufferedOutputStream(Integer.MAX_VALUE);
 			} catch (Exception e) {
 				throw new IOException(e);
-			}			
+			}
 		} else {
 			throw new IOException("Failed to create file, path " + path.toString());
 		}
-		
+
 		if (outputStream != null){
-			return new CrailHDFSOutputStream(outputStream, statistics);					
+			return new CrailHDFSOutputStream(outputStream, statistics);
 		} else {
 			throw new IOException("Failed to create file, path " + path.toString());
-		}		
+		}
 	}
 
 	@Override
@@ -150,7 +150,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			} else if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_FILE_EXISTS])){
 			} else {
 				throw new IOException(e);
-			}			
+			}
 		}
 	}
 
@@ -171,11 +171,16 @@ public class CrailHDFS extends AbstractFileSystem {
 	public FSDataInputStream open(Path path, int bufferSize) throws AccessControlException, FileNotFoundException, UnresolvedLinkException, IOException {
 		CrailFile fileInfo = null;
 		try {
-			fileInfo = dfs.lookup(path.toUri().getRawPath()).get().asFile();
+			CrailNode node = dfs.lookup(path.toUri().getRawPath()).get();
+			if (node.getType() == CrailNodeType.KEYVALUE) {
+				fileInfo = node.asKeyValue();
+			} else {
+				fileInfo = node.asFile();
+			}
 		} catch(Exception e){
 			throw new IOException(e);
 		}
-		
+
 		CrailBufferedInputStream inputStream = null;
 		if (fileInfo != null){
 			try {
@@ -184,7 +189,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				throw new IOException(e);
 			}
 		}
-		
+
 		if (inputStream != null){
 			return new CrailHDFSInputStream(inputStream);
 		} else {
@@ -237,11 +242,11 @@ public class CrailHDFS extends AbstractFileSystem {
 		if (directFile == null){
 			throw new FileNotFoundException("filename " + path);
 		}
-		
+
 		FsPermission permission = FsPermission.getFileDefault();
 		if (directFile.getType().isDirectory()) {
 			permission = FsPermission.getDirDefault();
-		}		
+		}
 		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isContainer(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
 		return status;
 	}
@@ -258,7 +263,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				locations[i].setNames(_locations[i].getNames());
 				locations[i].setHosts(_locations[i].getHosts());
 				locations[i].setTopologyPaths(_locations[i].getTopology());
-				
+
 			}
 			return locations;
 		} catch(Exception e){
@@ -285,7 +290,7 @@ public class CrailHDFS extends AbstractFileSystem {
 					if (directFile.getType().isDirectory()) {
 						permission = FsPermission.getDirDefault();
 					}
-					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isContainer(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), workingDir));	
+					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isContainer(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), workingDir));
 					statusList.add(status);
 				}
 			}
