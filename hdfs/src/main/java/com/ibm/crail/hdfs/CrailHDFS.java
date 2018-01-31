@@ -104,6 +104,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])){
 				fileInfo = null;
 			} else {
+				e.printStackTrace();
 				throw new IOException(e);
 			}
 		}
@@ -114,6 +115,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			try {
 				fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailStorageClass.PARENT, CrailLocationClass.PARENT).get().asFile();
 			} catch(Exception e){
+				e.printStackTrace();
 				throw new IOException(e);
 			}
 		}
@@ -124,6 +126,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				fileInfo.syncDir();
 				outputStream = fileInfo.getBufferedOutputStream(Integer.MAX_VALUE);
 			} catch (Exception e) {
+				e.printStackTrace();
 				throw new IOException(e);
 			}
 		} else {
@@ -149,6 +152,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				mkdir(path, permission, createParent);
 			} else if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_FILE_EXISTS])){
 			} else {
+				e.printStackTrace();
 				throw new IOException(e);
 			}
 		}
@@ -163,6 +167,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			}
 			return file != null;
 		} catch(Exception e){
+			e.printStackTrace();
 			throw new IOException(e);
 		}
 	}
@@ -178,6 +183,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				fileInfo = node.asFile();
 			}
 		} catch(Exception e){
+			e.printStackTrace();
 			throw new IOException(e);
 		}
 
@@ -186,6 +192,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			try {
 				inputStream = fileInfo.getBufferedInputStream(fileInfo.getCapacity());
 			} catch(Exception e){
+				e.printStackTrace();
 				throw new IOException(e);
 			}
 		}
@@ -210,6 +217,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				file.syncDir();
 			}
 		} catch(Exception e){
+			e.printStackTrace();
 			throw new IOException(e);
 		}
 	}
@@ -237,6 +245,7 @@ public class CrailHDFS extends AbstractFileSystem {
 		try {
 			directFile = dfs.lookup(path.toUri().getRawPath()).get();
 		} catch(Exception e){
+			e.printStackTrace();
 			throw new IOException(e);
 		}
 		if (directFile == null){
@@ -267,6 +276,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			}
 			return locations;
 		} catch(Exception e){
+			e.printStackTrace();
 			throw new IOException(e);
 		}
 	}
@@ -298,6 +308,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			statusList.toArray(list);
 			return list;
 		} catch(Exception e){
+			e.printStackTrace();
 			throw new FileNotFoundException(path.toUri().getRawPath());
 		}
 	}
