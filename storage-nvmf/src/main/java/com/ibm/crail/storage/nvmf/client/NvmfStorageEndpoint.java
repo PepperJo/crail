@@ -62,7 +62,8 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		endpoint = group.createEndpoint();
 		try {
 			URI url = new URI("nvmef://" + inetSocketAddress.getHostString() + ":" + inetSocketAddress.getPort() +
-					"/0/" + NvmfStorageConstants.NAMESPACE + "?subsystem=nqn.2016-06.io.spdk:cnode1");
+					"/0/" + NvmfStorageConstants.NAMESPACE + "?subsystem=nqn.2016-06.io.spdk:cnode" +
+					inetSocketAddress.getPort());
 			LOG.info("Connecting to " + url.toString());
 			endpoint.connect(url);
 		} catch (URISyntaxException e) {

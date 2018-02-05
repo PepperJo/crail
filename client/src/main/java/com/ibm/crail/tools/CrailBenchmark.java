@@ -671,6 +671,54 @@ public class CrailBenchmark {
 		fs.getStatistics().print("close");
 	}
 
+	void getKeyX(String filename, int size, int loop, int batch) throws Exception {
+		System.out.println("getKeyX, path " + filename + ", size " + size + ", loop " + loop);
+
+		int bufSize = Math.min(CrailConstants.BUFFER_SIZE, size);
+		CrailBuffer buf = fs.allocateBuffer().clear().limit(bufSize).slice();
+		int numOp = (size + CrailConstants.BUFFER_SIZE - 1) / CrailConstants.BUFFER_SIZE;
+		Future<CrailResult> futures[] = new Future[batch];
+
+		String filenames[] = new String[loop];
+		for (int i = 0; i < loop; i++) {
+			filenames[i] = filename + i;
+			CrailFile file = fs.create(filenames[i], CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().asFile();
+			file.syncDir();
+			CrailOutputStream directOutputStream = file.getDirectOutputStream(0);
+			for (int j = 0; j < numOp; j++) {
+				buf.clear();
+				directOutputStream.write(buf).get();
+			}
+			directOutputStream.close();
+		}
+
+		//benchmark
+		System.out.println("starting benchmark...");
+		fs.getStatistics().reset();
+		long start = System.currentTimeMillis();
+		for (int i = 0; i < loop; i++){
+			CrailInputStream directInputStream = fs.lookup(filenames[i]).get().asFile().getDirectInputStream(0);
+			for (int n = 0; n < numOp;) {
+				int remaining = Math.min(batch, numOp - n);
+				for (int j = 0; j < remaining; j++, n++) {
+					buf.clear();
+					futures[j] = directInputStream.read(buf);
+				}
+				for (int j = 0; j < remaining; j++) {
+					futures[j].get();
+				}
+			}
+			directInputStream.close();
+		}
+		long end = System.currentTimeMillis();
+		double executionTime = ((double) (end - start));
+		double latency = executionTime * 1000.0 / ((double) loop);
+		System.out.println("execution time [ms] " + executionTime);
+		System.out.println("latency [us] " + latency);
+
+		fs.getStatistics().print("close");
+	}
+
 	void getFile(String filename, int loop) throws Exception, InterruptedException {
 		System.out.println("getFile, filename " + filename  + ", loop " + loop);
 		
@@ -999,7 +1047,7 @@ public class CrailBenchmark {
 		boolean useBuffered = true;
 		
 		String benchmarkTypes = "write|writeAsync|readSequential|readRandom|readSequentialAsync|readMultiStream|"
-				+ "createFile|createFileAsync|createMultiFile|getKey|getFile|getFileAsync|enumerateDir|browseDir|"
+				+ "createFile|createFileAsync|createMultiFile|getKey|getKeyX|getFile|getFileAsync|enumerateDir|browseDir|"
 				+ "writeInt|readInt|seekInt|readMultiStreamInt|printLocationclass";
 		Option typeOption = Option.builder("t").desc("type of experiment [" + benchmarkTypes + "]").hasArg().build();
 		Option fileOption = Option.builder("f").desc("filename").hasArg().build();
@@ -1122,6 +1170,10 @@ public class CrailBenchmark {
 		} else if (type.equalsIgnoreCase("getKey")) {
 			benchmark.open();
 			benchmark.getKey(filename, size, loop);
+			benchmark.close();
+		} else if (type.equalsIgnoreCase("getKeyX")) {
+			benchmark.open();
+			benchmark.getKeyX(filename, size, loop, batch);
 			benchmark.close();
 		} else if (type.equals("getFile")){
 			benchmark.open();
